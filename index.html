@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forge MMA | Entrenamiento en Canvas</title>
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: #1A1A1A;
+            font-family: 'Roboto', sans-serif, system-ui;
+        }
+        canvas {
+            display: block;
+            touch-action: none; /* Prevents browser handling of touch events like scrolling */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="mmaCanvas"></canvas>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('mmaCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // --- STATE MANAGEMENT ---
+            let currentWorkout = null;
+            let currentExerciseIndex = 0;
+            let timeRemaining = 0;
+            let isPaused = true;
+            let isWorking = true; // true for work, false for rest
+            let timerInterval = null;
+            let selectedDay = 'lunes';
+            let listScrollY = 0;
+            
+            // --- Touch/Drag State for scrolling list ---
+            let isDraggingList = false;
+            let lastTouchY = 0;
+            let scrollMomentum = 0;
+
+
+            // --- UI ELEMENTS & LAYOUT ---
+            let uiElements = {
+                dayButtons: {},
+                controlButtons: {},
+                workoutListArea: {} // To store the list's bounding box
+            };
+
+            // --- SOUNDS ---
+            const workEndSound = new Tone.Synth().toDestination();
+            const restEndSound = new Tone.Synth({ oscillator: { type: "sine" } }).toDestination();
+
+            // --- DETAILED WORKOUT PLANS (Same as before) ---
+            const workouts = {
+                lunes: {
+                    name: "Potencia y Presión (Estilo Topuria)",
+                    exercises: [
+                        { name: "Calentamiento: Jumping Jacks", duration: 60, rest: 15, description: "Salta abriendo y cerrando piernas y brazos simultáneamente." },
+                        { name: "Calentamiento: High Knees", duration: 60, rest: 15, description: "Corre en el sitio levantando las rodillas lo más alto posible." },
+                        { name: "Calentamiento: Movilidad Articular", duration: 120, rest: 60, description: "Realiza círculos con tobillos, rodillas, caderas, hombros y muñecas." },
+                        { name: "Sombra: Round 1 (Jab y Movimiento)", duration: 180, rest: 60, description: "Lanza jabs mientras te mueves. Enfócate en el juego de pies y la defensa." },
+                        { name: "Sombra: Round 2 (Combinaciones 1-2)", duration: 180, rest: 60, description: "Practica la combinación de jab y recto (1-2) manteniendo la guardia." },
+                        { name: "Saco Pesado: Round 1 (Golpes de Poder)", duration: 180, rest: 60, description: "Lanza ganchos y rectos con máxima intención. Concéntrate en la rotación de cadera." },
+                        { name: "Saco Pesado: Round 2 (Ráfagas de 15s)", duration: 180, rest: 60, description: "Golpea el saco con máxima velocidad durante 15s, luego muévete y descansa 15s. Repite." },
+                        { name: "Lucha: Defensa de Derribo (Sprawls)", duration: 180, rest: 60, description: "Desde la postura de lucha, echa las piernas hacia atrás rápidamente para defender un derribo imaginario." },
+                        { name: "Grappling: Mantener Montada (Drill)", duration: 180, rest: 60, description: "Con un dummy o compañero, mantén la posición de montada mientras él intenta escapar." },
+                        { name: "Grappling: Control Lateral (Drill)", duration: 180, rest: 60, description: "Practica mantener el control desde el lado, aplicando presión con el hombro." },
+                        { name: "Enfriamiento: Estiramientos Estáticos", duration: 300, rest: 0, description: "Mantén estiramientos suaves para los principales grupos musculares por 20-30 segundos cada uno." }
+                    ]
+                },
+                martes: {
+                    name: "Descanso Activo y Flexibilidad",
+                    exercises: [ 
+                        { name: "Cardio Ligero (Trote o Bici)", duration: 1200, rest: 60, description: "Mantén un ritmo cardíaco bajo y constante para promover el flujo sanguíneo y la recuperación." },
+                        { name: "Estiramiento Profundo (Yoga/Movilidad)", duration: 900, rest: 60, description: "Sigue una rutina de estiramientos profundos, enfocándote en caderas, hombros y espalda." },
+                        { name: "Foam Roller (Liberación Miofascial)", duration: 600, rest: 0, description: "Usa un rodillo de espuma para masajear los músculos tensos, especialmente piernas y espalda." }
+                    ]
+                },
+                miercoles: {
+                    name: "Técnica y Distancia (Estilo Garry)",
+                    exercises: [
+                        { name: "Calentamiento: Saltar la Cuerda", duration: 180, rest: 30, description: "Mantén un ritmo constante. Alterna pies, salta con ambos, haz dobles saltos." },
+                        { name: "Calentamiento: Movimiento de Pies", duration: 120, rest: 60, description: "Practica pivots, pasos laterales y movimientos en ángulo sin lanzar golpes." },
+                        { name: "Sombra: Round 1 (Footwork y Ángulos)", duration: 180, rest: 60, description: "Muévete constantemente, creando ángulos como si tuvieras un oponente en frente." },
+                        { name: "Sombra: Round 2 (Patadas Frontales y Laterales)", duration: 180, rest: 60, description: "Lanza patadas frontales (teep) y laterales al aire, enfocándote en la técnica y el equilibrio." },
+                        { name: "Pads: Round 1 (Jab y Manejo de Distancia)", duration: 180, rest: 60, description: "Con un compañero, usa el jab para controlar la distancia y preparar otras combinaciones." },
+                        { name: "Pads: Round 2 (Contraataques)", duration: 180, rest: 60, description: "Tu compañero lanza un golpe lento (ej. un jab) y tú respondes con una combinación rápida." },
+                        { name: "Drills: Entrar y Salir del Rango", duration: 240, rest: 60, description: "Practica dar un paso para entrar, lanzar una combinación corta y salir rápidamente." },
+                        { name: "Enfriamiento: Estiramientos de Piernas", duration: 300, rest: 0, description: "Enfócate en isquiotibiales, cuádriceps, gemelos y caderas." }
+                    ]
+                },
+                jueves: {
+                    name: "Descanso Activo y Recuperación",
+                    exercises: [ 
+                        { name: "Actividad de Bajo Impacto (Nadar/Remar)", duration: 1800, rest: 60, description: "Realiza una sesión larga a baja intensidad para mejorar la capacidad aeróbica sin impacto articular." },
+                        { name: "Meditación / Trabajo de Respiración", duration: 600, rest: 0, description: "Siéntate cómodamente y enfócate en tu respiración. Inhala lento, exhala lento. Ayuda a la recuperación." }
+                    ]
+                },
+                viernes: {
+                    name: "Acondicionamiento Feroz (HIIT)",
+                    exercises: [
+                        { name: "Calentamiento Dinámico", duration: 240, rest: 60, description: "Realiza zancadas, círculos de brazos, rotaciones de torso, patadas suaves." },
+                        { name: "HIIT: Burpees", duration: 45, rest: 15, description: "Haz una flexión, salta agrupando las piernas y finaliza con un salto vertical. Mantén el ritmo." },
+                        { name: "HIIT: Kettlebell Swings", duration: 45, rest: 15, description: "Con una pesa rusa, balancéala desde entre las piernas hasta la altura del pecho usando la cadera." },
+                        { name: "HIIT: Battle Ropes", duration: 45, rest: 15, description: "Sujeta las cuerdas y haz ondas alternas o simultáneas con máxima intensidad." },
+                        { name: "HIIT: Lanzamiento de Balón", duration: 45, rest: 60, description: "Levanta un balón medicinal sobre tu cabeza y lánzalo con fuerza contra el suelo." },
+                        { name: "HIIT (Round 2): Burpees", duration: 45, rest: 15, description: "Segunda ronda. ¡Mantén la intensidad y la técnica!" },
+                        { name: "HIIT (Round 2): Kettlebell Swings", duration: 45, rest: 15, description: "La potencia viene de la cadera, no de los brazos." },
+                        { name: "HIIT (Round 2): Battle Ropes", duration: 45, rest: 15, description: "¡No pares! Mantén las olas vivas durante los 45 segundos." },
+                        { name: "HIIT (Round 2): Lanzamiento de Balón", duration: 45, rest: 60, description: "Usa todo tu cuerpo para lanzar el balón con la máxima potencia." },
+                        { name: "Core: Plancha", duration: 60, rest: 15, description: "Mantén el cuerpo recto como una tabla, apoyado en antebrazos y puntas de los pies." },
+                        { name: "Core: Elevación de Piernas", duration: 60, rest: 60, description: "Tumbado, levanta las piernas rectas hasta formar un ángulo de 90 grados y baja lentamente." },
+                        { name: "Enfriamiento: Caminata y Estiramiento Ligero", duration: 300, rest: 0, description: "Reduce el ritmo cardíaco y estira los músculos trabajados." }
+                    ]
+                },
+                sabado: {
+                    name: "Sparring / Open Mat",
+                    exercises: [
+                        { name: "Sparring Ligero (Boxeo): Round 1", duration: 180, rest: 60, description: "Enfócate en la técnica, no en la fuerza. Fluye con tu compañero, busca combinaciones y defensa." },
+                        { name: "Sparring Ligero (Boxeo): Round 2", duration: 180, rest: 60, description: "Intenta aplicar las técnicas de distancia y ángulos del miércoles." },
+                        { name: "Sparring Ligero (Grappling): Round 1", duration: 240, rest: 60, description: "Practica posiciones y sumisiones de forma controlada y sin fuerza excesiva. Comunícate." },
+                        { name: "Sparring Ligero (Grappling): Round 2", duration: 240, rest: 60, description: "Enfócate en las transiciones y en mantener la presión como el lunes." },
+                        { name: "Sparring Situacional (MMA): Defensa de derribo", duration: 180, rest: 60, description: "Un compañero intenta derribarte, tú te enfocas solo en defender (sprawl, etc.)." },
+                        { name: "Sparring Situacional (MMA): Salir de la reja", duration: 180, rest: 60, description: "Un compañero te presiona contra la reja (o pared), tú practicas cómo escapar." },
+                        { name: "Enfriamiento y Análisis", duration: 300, rest: 0, description: "Estira y comenta con tu compañero qué funcionó, qué no y en qué mejorar." }
+                    ]
+                }
+            };
+
+            // --- CANVAS RESIZE ---
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                draw(); // Redraw everything on resize
+            }
+
+            // --- DRAWING FUNCTIONS ---
+            function draw() {
+                ctx.fillStyle = '#1A1A1A';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const isMobile = canvas.width < 820;
+                const workoutListWidth = isMobile ? canvas.width * 0.9 : 400;
+                const mainPanelWidth = isMobile ? canvas.width * 0.9 : canvas.width - workoutListWidth - 60;
+                const mainPanelX = isMobile ? canvas.width * 0.05 : 20;
+                const workoutListX = isMobile ? canvas.width * 0.05 : mainPanelX + mainPanelWidth + 20;
+                const mainPanelHeight = isMobile ? canvas.height * 0.5 - 110 : canvas.height - 180;
+                const workoutListY = isMobile ? mainPanelHeight + 180 : 100;
+
+                drawHeader();
+                drawDaySelector(mainPanelX, mainPanelWidth);
+                drawTimerPanel(mainPanelX, mainPanelWidth, mainPanelHeight);
+                drawWorkoutList(workoutListX, workoutListY, workoutListWidth, isMobile);
+            }
+
+            function drawHeader() {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 32px Roboto';
+                ctx.textAlign = 'center';
+                ctx.fillText('FORGE', canvas.width / 2 - 40, 50);
+                ctx.fillStyle = '#E53935';
+                ctx.fillText('MMA', canvas.width / 2 + 40, 50);
+            }
+
+            function drawDaySelector(x, width) {
+                const days = Object.keys(workouts);
+                const buttonWidth = Math.min(110, (width - (days.length - 1) * 10) / days.length);
+                const buttonHeight = 40;
+                const totalWidth = days.length * buttonWidth + (days.length - 1) * 10;
+                const startX = x + (width - totalWidth) / 2;
+                const y = 100;
+
+                days.forEach((day, index) => {
+                    const btnX = startX + index * (buttonWidth + 10);
+                    ctx.fillStyle = selectedDay === day ? '#E53935' : '#424242';
+                    roundRect(ctx, btnX, y, buttonWidth, buttonHeight, 20, true, false);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 14px Roboto';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(day.charAt(0).toUpperCase() + day.slice(1), btnX + buttonWidth / 2, y + buttonHeight / 2);
+                    uiElements.dayButtons[day] = { x: btnX, y: y, width: buttonWidth, height: buttonHeight };
+                });
+            }
+
+            function drawTimerPanel(x, width, height) {
+                const y = 160;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                roundRect(ctx, x, y, width, height, 20, true, false);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                roundRect(ctx, x, y, width, height, 20, false, true);
+
+                const workout = currentWorkout || workouts[selectedDay];
+                ctx.fillStyle = '#E53935';
+                ctx.font = 'bold 22px Roboto';
+                ctx.textAlign = 'center';
+                wrapText(ctx, workout.name, x + width / 2, y + 40, width - 40, 25);
+
+                const timerY = y + height * 0.45;
+                ctx.fillStyle = isWorking ? '#FFFFFF' : '#64B5F6';
+                ctx.font = `900 ${height < 300 ? '4rem' : '6rem'} Roboto`;
+                ctx.fillText(formatTime(timeRemaining), x + width / 2, timerY);
+
+                ctx.fillStyle = '#CCCCCC';
+                ctx.font = 'bold 16px Roboto';
+                let statusText = "";
+                let descriptionText = "";
+                if (currentWorkout && currentExerciseIndex < currentWorkout.exercises.length) {
+                    const exercise = currentWorkout.exercises[currentExerciseIndex];
+                    statusText = isWorking ? `TRABAJO: ${exercise.name}` : "DESCANSO";
+                    descriptionText = exercise.description || "";
+                } else if (!currentWorkout) {
+                    statusText = "Selecciona un día para empezar";
+                }
+                if (timerInterval === null && timeRemaining < 1 && currentWorkout && currentExerciseIndex >= currentWorkout.exercises.length) {
+                    statusText = "¡Entrenamiento Completado!";
+                }
+                wrapText(ctx, statusText, x + width / 2, timerY + 50, width - 40, 20);
+                
+                ctx.fillStyle = '#BDBDBD';
+                ctx.font = '14px Roboto';
+                wrapText(ctx, descriptionText, x + width / 2, timerY + 80, width - 60, 18);
+
+                const btnWidth = 150;
+                const btnHeight = 50;
+                const btnY = y + height - btnHeight - 20;
+                const gap = 20;
+                const startBtnX = x + width / 2 - btnWidth - gap / 2;
+                ctx.fillStyle = '#E53935';
+                roundRect(ctx, startBtnX, btnY, btnWidth, btnHeight, 10, true, false);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 18px Roboto';
+                ctx.fillText(isPaused ? (timeRemaining > 0 ? 'Reanudar' : 'Iniciar') : 'Pausar', startBtnX + btnWidth / 2, btnY + btnHeight / 2);
+                uiElements.controlButtons.start = { x: startBtnX, y: btnY, width: btnWidth, height: btnHeight };
+
+                const resetBtnX = x + width / 2 + gap / 2;
+                ctx.fillStyle = '#424242';
+                roundRect(ctx, resetBtnX, btnY, btnWidth, btnHeight, 10, true, false);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText('Reiniciar', resetBtnX + btnWidth / 2, btnY + btnHeight / 2);
+                uiElements.controlButtons.reset = { x: resetBtnX, y: btnY, width: btnWidth, height: btnHeight };
+            }
+
+            function drawWorkoutList(x, y, width, isMobile) {
+                const height = isMobile ? canvas.height - y - 20 : canvas.height - y - 40;
+                uiElements.workoutListArea = { x, y, width, height }; // Store area for hit detection
+                
+                ctx.fillStyle = '#212121';
+                roundRect(ctx, x, y, width, height, 20, true, false);
+                
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 18px Roboto';
+                ctx.textAlign = 'center';
+                ctx.fillText('Rutina del Día', x + width / 2, y + 30);
+
+                const workout = workouts[selectedDay];
+                if (!workout) return;
+
+                const itemHeight = 85;
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(x, y + 50, width, height - 60);
+                ctx.clip();
+
+                workout.exercises.forEach((ex, index) => {
+                    const itemY = y + 60 + (index * itemHeight) - listScrollY;
+                    if (itemY > y + height || itemY + itemHeight < y + 50) return;
+
+                    ctx.fillStyle = index === currentExerciseIndex && currentWorkout ? '#E53935' : '#424242';
+                    roundRect(ctx, x + 15, itemY, width - 30, itemHeight - 10, 10, true, false);
+
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = 'bold 14px Roboto';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(ex.name, x + 25, itemY + 10, width - 50);
+
+                    ctx.fillStyle = '#BDBDBD';
+                    ctx.font = '12px Roboto';
+                    ctx.fillText(`${formatTime(ex.duration)} / ${formatTime(ex.rest)} descanso`, x + 25, itemY + 30);
+                    
+                    ctx.fillStyle = '#A0A0A0';
+                    wrapText(ctx, ex.description || "", x + 25, itemY + 50, width - 60, 14);
+                });
+                ctx.restore();
+            }
+
+            function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+                const words = text.split(' ');
+                let line = '';
+                let startY = y;
+                for(let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    const testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        ctx.fillText(line, x, startY);
+                        line = words[n] + ' ';
+                        startY += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                ctx.fillText(line, x, startY);
+            }
+
+            function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+                if (typeof radius === 'number') {
+                    radius = {tl: radius, tr: radius, br: radius, bl: radius};
+                } else {
+                    var defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+                    for (var side in defaultRadius) {
+                        radius[side] = radius[side] || defaultRadius[side];
+                    }
+                }
+                ctx.beginPath();
+                ctx.moveTo(x + radius.tl, y);
+                ctx.lineTo(x + width - radius.tr, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+                ctx.lineTo(x + width, y + height - radius.br);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+                ctx.lineTo(x + radius.bl, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+                ctx.lineTo(x, y + radius.tl);
+                ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+                ctx.closePath();
+                if (fill) ctx.fill();
+                if (stroke) ctx.stroke();
+            }
+            
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+
+            function selectDay(day) {
+                resetTimer();
+                selectedDay = day;
+                currentWorkout = null;
+                listScrollY = 0;
+                const workoutPlan = workouts[day];
+                if (workoutPlan && workoutPlan.exercises.length > 0) {
+                    timeRemaining = workoutPlan.exercises[0].duration;
+                } else {
+                    timeRemaining = 0;
+                }
+            }
+            
+            function loadExercise(index) {
+                if (!currentWorkout || index >= currentWorkout.exercises.length) {
+                    workoutComplete();
+                    return;
+                }
+                const exercise = currentWorkout.exercises[index];
+                isWorking = true;
+                timeRemaining = exercise.duration;
+                
+                const itemHeight = 85;
+                const listArea = uiElements.workoutListArea;
+                const visibleHeight = listArea.height - 110;
+                const targetScroll = index * itemHeight - visibleHeight / 2 + itemHeight / 2;
+
+                const workout = workouts[selectedDay];
+                const totalListHeight = workout.exercises.length * itemHeight;
+                const maxScroll = Math.max(0, totalListHeight - (listArea.height - 60));
+                
+                listScrollY = Math.max(0, Math.min(targetScroll, maxScroll));
+            }
+
+            function workoutComplete() {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isPaused = true;
+                currentExerciseIndex = currentWorkout.exercises.length;
+            }
+
+            function tick() {
+                if (isPaused) return;
+                timeRemaining--;
+                if (timeRemaining < 0) {
+                    if (isWorking) {
+                        workEndSound.triggerAttackRelease("C5", "0.5s");
+                        const restTime = currentWorkout.exercises[currentExerciseIndex].rest;
+                        if (restTime > 0) {
+                            isWorking = false;
+                            timeRemaining = restTime;
+                        } else {
+                            currentExerciseIndex++;
+                            loadExercise(currentExerciseIndex);
+                        }
+                    } else {
+                        restEndSound.triggerAttackRelease("G5", "0.2s");
+                        currentExerciseIndex++;
+                        loadExercise(currentExerciseIndex);
+                    }
+                }
+            }
+
+            function togglePause() {
+                if (!workouts[selectedDay] || workouts[selectedDay].exercises.length === 0) return;
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                if (!currentWorkout) {
+                    currentWorkout = workouts[selectedDay];
+                    currentExerciseIndex = 0;
+                    loadExercise(0);
+                }
+                if (currentExerciseIndex >= currentWorkout.exercises.length) return;
+                isPaused = !isPaused;
+                if (!isPaused && !timerInterval) {
+                    timerInterval = setInterval(tick, 1000);
+                }
+            }
+
+            function resetTimer() {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isPaused = true;
+                currentWorkout = null;
+                currentExerciseIndex = 0;
+                listScrollY = 0;
+                const workoutPlan = workouts[selectedDay];
+                if (workoutPlan && workoutPlan.exercises.length > 0) {
+                    timeRemaining = workoutPlan.exercises[0].duration;
+                } else {
+                    timeRemaining = 0;
+                }
+            }
+            
+            // --- EVENT HANDLERS ---
+            function handleCanvasClick(event) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                for (const day in uiElements.dayButtons) {
+                    const btn = uiElements.dayButtons[day];
+                    if (mouseX > btn.x && mouseX < btn.x + btn.width && mouseY > btn.y && mouseY < btn.y + btn.height) {
+                        selectDay(day);
+                        return;
+                    }
+                }
+                const startBtn = uiElements.controlButtons.start;
+                if (mouseX > startBtn.x && mouseX < startBtn.x + startBtn.width && mouseY > startBtn.y && mouseY < startBtn.y + startBtn.height) {
+                    togglePause();
+                    return;
+                }
+                const resetBtn = uiElements.controlButtons.reset;
+                if (mouseX > resetBtn.x && mouseX < resetBtn.x + resetBtn.width && mouseY > resetBtn.y && mouseY < resetBtn.y + resetBtn.height) {
+                    resetTimer();
+                    return;
+                }
+            }
+
+            function handleScroll(event) {
+                event.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                const listArea = uiElements.workoutListArea;
+
+                if (mouseX > listArea.x && mouseX < listArea.x + listArea.width &&
+                    mouseY > listArea.y && mouseY < listArea.y + listArea.height) {
+                    
+                    listScrollY += event.deltaY * 0.5; // Adjust multiplier for scroll speed
+
+                    const workout = workouts[selectedDay];
+                    const itemHeight = 85;
+                    const totalListHeight = workout.exercises.length * itemHeight;
+                    const maxScroll = Math.max(0, totalListHeight - (listArea.height - 60));
+
+                    listScrollY = Math.max(0, Math.min(listScrollY, maxScroll));
+                }
+            }
+            
+            function handleTouchStart(event) {
+                const rect = canvas.getBoundingClientRect();
+                const touch = event.touches[0];
+                const mouseX = touch.clientX - rect.left;
+                const mouseY = touch.clientY - rect.top;
+                const listArea = uiElements.workoutListArea;
+
+                if (mouseX > listArea.x && mouseX < listArea.x + listArea.width &&
+                    mouseY > listArea.y && mouseY < listArea.y + listArea.height) {
+                    isDraggingList = true;
+                    lastTouchY = mouseY;
+                    scrollMomentum = 0;
+                }
+            }
+
+            function handleTouchMove(event) {
+                if (!isDraggingList) return;
+                event.preventDefault();
+
+                const rect = canvas.getBoundingClientRect();
+                const touch = event.touches[0];
+                const mouseY = touch.clientY - rect.top;
+                
+                const deltaY = mouseY - lastTouchY;
+                listScrollY -= deltaY;
+                lastTouchY = mouseY;
+                scrollMomentum = deltaY;
+
+                const workout = workouts[selectedDay];
+                const itemHeight = 85;
+                const totalListHeight = workout.exercises.length * itemHeight;
+                const listArea = uiElements.workoutListArea;
+                const maxScroll = Math.max(0, totalListHeight - (listArea.height - 60));
+                listScrollY = Math.max(0, Math.min(listScrollY, maxScroll));
+            }
+
+            function handleTouchEnd(event) {
+                isDraggingList = false;
+            }
+
+            function gameLoop() {
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+
+            function init() {
+                window.addEventListener('resize', resizeCanvas);
+                canvas.addEventListener('click', handleCanvasClick);
+                canvas.addEventListener('wheel', handleScroll, { passive: false });
+                canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+                canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+                canvas.addEventListener('touchend', handleTouchEnd);
+                
+                resizeCanvas();
+                selectDay('lunes');
+                gameLoop();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
