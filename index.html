@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forge MMA | Entrenamiento en Canvas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Forge MMA | Entrenamiento Responsivo</title>
     <!-- Tone.js for sound effects -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
@@ -16,7 +16,8 @@
         }
         canvas {
             display: block;
-            touch-action: none; /* Prevents browser handling of touch events like scrolling */
+            /* Prevents browser handling of touch events like scrolling or zooming */
+            touch-action: none; 
         }
     </style>
 </head>
@@ -33,7 +34,7 @@
             let currentExerciseIndex = 0;
             let timeRemaining = 0;
             let isPaused = true;
-            let isWorking = true; // true for work, false for rest
+            let isWorking = true;
             let timerInterval = null;
             let selectedDay = 'lunes';
             let listScrollY = 0;
@@ -43,19 +44,18 @@
             let lastTouchY = 0;
             let scrollMomentum = 0;
 
-
             // --- UI ELEMENTS & LAYOUT ---
             let uiElements = {
                 dayButtons: {},
                 controlButtons: {},
-                workoutListArea: {} // To store the list's bounding box
+                workoutListArea: {}
             };
 
             // --- SOUNDS ---
             const workEndSound = new Tone.Synth().toDestination();
             const restEndSound = new Tone.Synth({ oscillator: { type: "sine" } }).toDestination();
 
-            // --- DETAILED WORKOUT PLANS (Same as before) ---
+            // --- DETAILED WORKOUT PLANS ---
             const workouts = {
                 lunes: {
                     name: "Potencia y Presión (Estilo Topuria)",
@@ -136,7 +136,7 @@
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
-                draw(); // Redraw everything on resize
+                draw();
             }
 
             // --- DRAWING FUNCTIONS ---
@@ -145,17 +145,39 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 const isMobile = canvas.width < 820;
-                const workoutListWidth = isMobile ? canvas.width * 0.9 : 400;
-                const mainPanelWidth = isMobile ? canvas.width * 0.9 : canvas.width - workoutListWidth - 60;
-                const mainPanelX = isMobile ? canvas.width * 0.05 : 20;
-                const workoutListX = isMobile ? canvas.width * 0.05 : mainPanelX + mainPanelWidth + 20;
-                const mainPanelHeight = isMobile ? canvas.height * 0.5 - 110 : canvas.height - 180;
-                const workoutListY = isMobile ? mainPanelHeight + 180 : 100;
+
+                if (isMobile) {
+                    drawMobileLayout();
+                } else {
+                    drawDesktopLayout();
+                }
+            }
+            
+            function drawDesktopLayout() {
+                const workoutListWidth = 400;
+                const mainPanelWidth = canvas.width - workoutListWidth - 60;
+                const mainPanelX = 20;
+                const workoutListX = mainPanelX + mainPanelWidth + 20;
+                const mainPanelHeight = canvas.height - 180;
+                const workoutListY = 100;
 
                 drawHeader();
                 drawDaySelector(mainPanelX, mainPanelWidth);
-                drawTimerPanel(mainPanelX, mainPanelWidth, mainPanelHeight);
-                drawWorkoutList(workoutListX, workoutListY, workoutListWidth, isMobile);
+                drawTimerPanel(mainPanelX, 160, mainPanelWidth, mainPanelHeight);
+                drawWorkoutList(workoutListX, workoutListY, workoutListWidth, canvas.height - workoutListY - 40);
+            }
+            
+            function drawMobileLayout() {
+                const mainPanelWidth = canvas.width * 0.9;
+                const mainPanelX = canvas.width * 0.05;
+                const mainPanelHeight = canvas.height * 0.5 - 110;
+                const workoutListY = mainPanelHeight + 180;
+                const workoutListHeight = canvas.height - workoutListY - 20;
+
+                drawHeader();
+                drawDaySelector(mainPanelX, mainPanelWidth);
+                drawTimerPanel(mainPanelX, 160, mainPanelWidth, mainPanelHeight);
+                drawWorkoutList(mainPanelX, workoutListY, mainPanelWidth, workoutListHeight);
             }
 
             function drawHeader() {
@@ -188,8 +210,7 @@
                 });
             }
 
-            function drawTimerPanel(x, width, height) {
-                const y = 160;
+            function drawTimerPanel(x, y, width, height) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
                 roundRect(ctx, x, y, width, height, 20, true, false);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
@@ -197,7 +218,7 @@
 
                 const workout = currentWorkout || workouts[selectedDay];
                 ctx.fillStyle = '#E53935';
-                ctx.font = 'bold 22px Roboto';
+                ctx.font = `bold ${width < 400 ? '18px' : '22px'} Roboto`;
                 ctx.textAlign = 'center';
                 wrapText(ctx, workout.name, x + width / 2, y + 40, width - 40, 25);
 
@@ -207,7 +228,7 @@
                 ctx.fillText(formatTime(timeRemaining), x + width / 2, timerY);
 
                 ctx.fillStyle = '#CCCCCC';
-                ctx.font = 'bold 16px Roboto';
+                ctx.font = `bold ${width < 400 ? '14px' : '16px'} Roboto`;
                 let statusText = "";
                 let descriptionText = "";
                 if (currentWorkout && currentExerciseIndex < currentWorkout.exercises.length) {
@@ -223,7 +244,7 @@
                 wrapText(ctx, statusText, x + width / 2, timerY + 50, width - 40, 20);
                 
                 ctx.fillStyle = '#BDBDBD';
-                ctx.font = '14px Roboto';
+                ctx.font = ` ${width < 400 ? '12px' : '14px'} Roboto`;
                 wrapText(ctx, descriptionText, x + width / 2, timerY + 80, width - 60, 18);
 
                 const btnWidth = 150;
@@ -246,9 +267,8 @@
                 uiElements.controlButtons.reset = { x: resetBtnX, y: btnY, width: btnWidth, height: btnHeight };
             }
 
-            function drawWorkoutList(x, y, width, isMobile) {
-                const height = isMobile ? canvas.height - y - 20 : canvas.height - y - 40;
-                uiElements.workoutListArea = { x, y, width, height }; // Store area for hit detection
+            function drawWorkoutList(x, y, width, height) {
+                uiElements.workoutListArea = { x, y, width, height };
                 
                 ctx.fillStyle = '#212121';
                 roundRect(ctx, x, y, width, height, 20, true, false);
@@ -436,6 +456,7 @@
             
             // --- EVENT HANDLERS ---
             function handleCanvasClick(event) {
+                if (isDraggingList) return; // Don't register clicks if it was a drag
                 const rect = canvas.getBoundingClientRect();
                 const mouseX = event.clientX - rect.left;
                 const mouseY = event.clientY - rect.top;
@@ -468,7 +489,7 @@
                 if (mouseX > listArea.x && mouseX < listArea.x + listArea.width &&
                     mouseY > listArea.y && mouseY < listArea.y + listArea.height) {
                     
-                    listScrollY += event.deltaY * 0.5; // Adjust multiplier for scroll speed
+                    listScrollY += event.deltaY * 0.5;
 
                     const workout = workouts[selectedDay];
                     const itemHeight = 85;
@@ -485,6 +506,8 @@
                 const mouseX = touch.clientX - rect.left;
                 const mouseY = touch.clientY - rect.top;
                 const listArea = uiElements.workoutListArea;
+                
+                isDraggingList = false; // Reset drag state
 
                 if (mouseX > listArea.x && mouseX < listArea.x + listArea.width &&
                     mouseY > listArea.y && mouseY < listArea.y + listArea.height) {
@@ -516,10 +539,30 @@
             }
 
             function handleTouchEnd(event) {
-                isDraggingList = false;
+                // This logic prevents a click from firing after a drag/scroll
+                setTimeout(() => {
+                    isDraggingList = false;
+                }, 100);
             }
 
             function gameLoop() {
+                // Apply a little friction to the momentum scroll
+                if (!isDraggingList && Math.abs(scrollMomentum) > 0.1) {
+                    scrollMomentum *= 0.95; // Friction
+                    listScrollY -= scrollMomentum;
+                    
+                    // Clamp scroll position
+                    const workout = workouts[selectedDay];
+                    const itemHeight = 85;
+                    const totalListHeight = workout.exercises.length * itemHeight;
+                    const listArea = uiElements.workoutListArea;
+                    const maxScroll = Math.max(0, totalListHeight - (listArea.height - 60));
+                    listScrollY = Math.max(0, Math.min(listScrollY, maxScroll));
+
+                } else if (!isDraggingList) {
+                    scrollMomentum = 0;
+                }
+
                 draw();
                 requestAnimationFrame(gameLoop);
             }
