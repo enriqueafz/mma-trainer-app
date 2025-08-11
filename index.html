@@ -55,79 +55,85 @@
             const workEndSound = new Tone.Synth().toDestination();
             const restEndSound = new Tone.Synth({ oscillator: { type: "sine" } }).toDestination();
 
-            // --- DETAILED WORKOUT PLANS ---
+            // --- EXTENDED & DETAILED WORKOUT PLANS (Approx. 1 hour) ---
             const workouts = {
                 lunes: {
                     name: "Potencia y Presión (Estilo Topuria)",
                     exercises: [
-                        { name: "Calentamiento: Jumping Jacks", duration: 60, rest: 15, description: "Salta abriendo y cerrando piernas y brazos simultáneamente." },
-                        { name: "Calentamiento: High Knees", duration: 60, rest: 15, description: "Corre en el sitio levantando las rodillas lo más alto posible." },
-                        { name: "Calentamiento: Movilidad Articular", duration: 120, rest: 60, description: "Realiza círculos con tobillos, rodillas, caderas, hombros y muñecas." },
-                        { name: "Sombra: Round 1 (Jab y Movimiento)", duration: 180, rest: 60, description: "Lanza jabs mientras te mueves. Enfócate en el juego de pies y la defensa." },
-                        { name: "Sombra: Round 2 (Combinaciones 1-2)", duration: 180, rest: 60, description: "Practica la combinación de jab y recto (1-2) manteniendo la guardia." },
-                        { name: "Saco Pesado: Round 1 (Golpes de Poder)", duration: 180, rest: 60, description: "Lanza ganchos y rectos con máxima intención. Concéntrate en la rotación de cadera." },
-                        { name: "Saco Pesado: Round 2 (Ráfagas de 15s)", duration: 180, rest: 60, description: "Golpea el saco con máxima velocidad durante 15s, luego muévete y descansa 15s. Repite." },
-                        { name: "Lucha: Defensa de Derribo (Sprawls)", duration: 180, rest: 60, description: "Desde la postura de lucha, echa las piernas hacia atrás rápidamente para defender un derribo imaginario." },
-                        { name: "Grappling: Mantener Montada (Drill)", duration: 180, rest: 60, description: "Con un dummy o compañero, mantén la posición de montada mientras él intenta escapar." },
-                        { name: "Grappling: Control Lateral (Drill)", duration: 180, rest: 60, description: "Practica mantener el control desde el lado, aplicando presión con el hombro." },
-                        { name: "Enfriamiento: Estiramientos Estáticos", duration: 300, rest: 0, description: "Mantén estiramientos suaves para los principales grupos musculares por 20-30 segundos cada uno." }
+                        { name: "Calentamiento: Jumping Jacks", sets: 1, duration: 60, rest: 15, description: "Salta abriendo y cerrando piernas y brazos simultáneamente." },
+                        { name: "Calentamiento: High Knees", sets: 1, duration: 60, rest: 15, description: "Corre en el sitio levantando las rodillas lo más alto posible." },
+                        { name: "Calentamiento: Movilidad Articular", sets: 1, duration: 120, rest: 60, description: "Realiza círculos con tobillos, rodillas, caderas, hombros y muñecas." },
+                        { name: "Sombra: Round 1 (Jab y Movimiento)", sets: 3, duration: 240, rest: 60, description: "Lanza jabs mientras te mueves. Enfócate en el juego de pies y la defensa." },
+                        { name: "Sombra: Round 2 (Combinaciones 1-2)", sets: 3, duration: 240, rest: 60, description: "Practica la combinación de jab y recto (1-2) manteniendo la guardia." },
+                        { name: "Sombra: Round 3 (Poder y Ángulos)", sets: 3, duration: 240, rest: 60, description: "Añade ganchos y uppercuts, cambiando de ángulo después de cada combinación." },
+                        { name: "Saco Pesado: Round 1 (Poder)", sets: 3, duration: 240, rest: 60, description: "Lanza ganchos y rectos con máxima intención. Concéntrate en la rotación de cadera." },
+                        { name: "Saco Pesado: Round 2 (Resistencia)", sets: 3, duration: 240, rest: 60, description: "Mantén un ritmo constante de golpes durante todo el round." },
+                        { name: "Saco Pesado: Round 3 (Ráfagas)", sets: 3, duration: 240, rest: 60, description: "Golpea con máxima velocidad por 15s, descansa 15s. Repite." },
+                        { name: "Lucha: Defensa de Derribo (Sprawls)", sets: 1, duration: 240, rest: 60, description: "Desde la postura de lucha, echa las piernas hacia atrás rápidamente para defender un derribo imaginario." },
+                        { name: "Grappling: Control y Presión", sets: 1, duration: 300, rest: 60, description: "Practica mantener control lateral y montada, aplicando presión constante." },
+                        { name: "Enfriamiento: Estiramientos Estáticos", sets: 1, duration: 300, rest: 0, description: "Mantén estiramientos suaves para los principales grupos musculares por 20-30 segundos cada uno." }
                     ]
                 },
                 martes: {
                     name: "Descanso Activo y Flexibilidad",
                     exercises: [ 
-                        { name: "Cardio Ligero (Trote o Bici)", duration: 1200, rest: 60, description: "Mantén un ritmo cardíaco bajo y constante para promover el flujo sanguíneo y la recuperación." },
-                        { name: "Estiramiento Profundo (Yoga/Movilidad)", duration: 900, rest: 60, description: "Sigue una rutina de estiramientos profundos, enfocándote en caderas, hombros y espalda." },
-                        { name: "Foam Roller (Liberación Miofascial)", duration: 600, rest: 0, description: "Usa un rodillo de espuma para masajear los músculos tensos, especialmente piernas y espalda." }
+                        { name: "Cardio Ligero (Trote o Bici)", sets: 1, duration: 1800, rest: 60, description: "Mantén un ritmo cardíaco bajo y constante para promover el flujo sanguíneo y la recuperación." },
+                        { name: "Estiramiento Profundo (Yoga/Movilidad)", sets: 1, duration: 1200, rest: 60, description: "Sigue una rutina de estiramientos profundos, enfocándote en caderas, hombros y espalda." },
+                        { name: "Foam Roller (Liberación Miofascial)", sets: 1, duration: 600, rest: 0, description: "Usa un rodillo de espuma para masajear los músculos tensos, especialmente piernas y espalda." }
                     ]
                 },
                 miercoles: {
                     name: "Técnica y Distancia (Estilo Garry)",
                     exercises: [
-                        { name: "Calentamiento: Saltar la Cuerda", duration: 180, rest: 30, description: "Mantén un ritmo constante. Alterna pies, salta con ambos, haz dobles saltos." },
-                        { name: "Calentamiento: Movimiento de Pies", duration: 120, rest: 60, description: "Practica pivots, pasos laterales y movimientos en ángulo sin lanzar golpes." },
-                        { name: "Sombra: Round 1 (Footwork y Ángulos)", duration: 180, rest: 60, description: "Muévete constantemente, creando ángulos como si tuvieras un oponente en frente." },
-                        { name: "Sombra: Round 2 (Patadas Frontales y Laterales)", duration: 180, rest: 60, description: "Lanza patadas frontales (teep) y laterales al aire, enfocándote en la técnica y el equilibrio." },
-                        { name: "Pads: Round 1 (Jab y Manejo de Distancia)", duration: 180, rest: 60, description: "Con un compañero, usa el jab para controlar la distancia y preparar otras combinaciones." },
-                        { name: "Pads: Round 2 (Contraataques)", duration: 180, rest: 60, description: "Tu compañero lanza un golpe lento (ej. un jab) y tú respondes con una combinación rápida." },
-                        { name: "Drills: Entrar y Salir del Rango", duration: 240, rest: 60, description: "Practica dar un paso para entrar, lanzar una combinación corta y salir rápidamente." },
-                        { name: "Enfriamiento: Estiramientos de Piernas", duration: 300, rest: 0, description: "Enfócate en isquiotibiales, cuádriceps, gemelos y caderas." }
+                        { name: "Calentamiento: Saltar la Cuerda", sets: 1, duration: 300, rest: 60, description: "Mantén un ritmo constante. Alterna pies, salta con ambos, haz dobles saltos." },
+                        { name: "Sombra: Round 1 (Footwork y Ángulos)", sets: 3, duration: 240, rest: 60, description: "Muévete constantemente, creando ángulos como si tuvieras un oponente en frente." },
+                        { name: "Sombra: Round 2 (Patadas Frontales y Laterales)", sets: 3, duration: 240, rest: 60, description: "Lanza patadas frontales (teep) y laterales al aire, enfocándote en la técnica y el equilibrio." },
+                        { name: "Sombra: Round 3 (Combinaciones largas)", sets: 3, duration: 240, rest: 60, description: "Combina puños y patadas en secuencias de 4-5 golpes." },
+                        { name: "Pads: Round 1 (Jab y Distancia)", sets: 3, duration: 240, rest: 60, description: "Con un compañero, usa el jab para controlar la distancia y preparar otras combinaciones." },
+                        { name: "Pads: Round 2 (Contraataques)", sets: 3, duration: 240, rest: 60, description: "Tu compañero lanza un golpe lento (ej. un jab) y tú respondes con una combinación rápida." },
+                        { name: "Pads: Round 3 (Velocidad)", sets: 3, duration: 240, rest: 60, description: "Enfócate en la velocidad de las combinaciones, no en la potencia." },
+                        { name: "Drills: Entrar y Salir del Rango", sets: 1, duration: 300, rest: 60, description: "Practica dar un paso para entrar, lanzar una combinación corta y salir rápidamente." },
+                        { name: "Enfriamiento: Estiramientos de Piernas", sets: 1, duration: 300, rest: 0, description: "Enfócate en isquiotibiales, cuádriceps, gemelos y caderas." }
                     ]
                 },
                 jueves: {
                     name: "Descanso Activo y Recuperación",
                     exercises: [ 
-                        { name: "Actividad de Bajo Impacto (Nadar/Remar)", duration: 1800, rest: 60, description: "Realiza una sesión larga a baja intensidad para mejorar la capacidad aeróbica sin impacto articular." },
-                        { name: "Meditación / Trabajo de Respiración", duration: 600, rest: 0, description: "Siéntate cómodamente y enfócate en tu respiración. Inhala lento, exhala lento. Ayuda a la recuperación." }
+                        { name: "Actividad de Bajo Impacto (Nadar/Remar)", sets: 1, duration: 2400, rest: 60, description: "Realiza una sesión larga a baja intensidad para mejorar la capacidad aeróbica sin impacto articular." },
+                        { name: "Meditación / Trabajo de Respiración", sets: 1, duration: 600, rest: 0, description: "Siéntate cómodamente y enfócate en tu respiración. Inhala lento, exhala lento. Ayuda a la recuperación." }
                     ]
                 },
                 viernes: {
                     name: "Acondicionamiento Feroz (HIIT)",
                     exercises: [
-                        { name: "Calentamiento Dinámico", duration: 240, rest: 60, description: "Realiza zancadas, círculos de brazos, rotaciones de torso, patadas suaves." },
-                        { name: "HIIT: Burpees", duration: 45, rest: 15, description: "Haz una flexión, salta agrupando las piernas y finaliza con un salto vertical. Mantén el ritmo." },
-                        { name: "HIIT: Kettlebell Swings", duration: 45, rest: 15, description: "Con una pesa rusa, balancéala desde entre las piernas hasta la altura del pecho usando la cadera." },
-                        { name: "HIIT: Battle Ropes", duration: 45, rest: 15, description: "Sujeta las cuerdas y haz ondas alternas o simultáneas con máxima intensidad." },
-                        { name: "HIIT: Lanzamiento de Balón", duration: 45, rest: 60, description: "Levanta un balón medicinal sobre tu cabeza y lánzalo con fuerza contra el suelo." },
-                        { name: "HIIT (Round 2): Burpees", duration: 45, rest: 15, description: "Segunda ronda. ¡Mantén la intensidad y la técnica!" },
-                        { name: "HIIT (Round 2): Kettlebell Swings", duration: 45, rest: 15, description: "La potencia viene de la cadera, no de los brazos." },
-                        { name: "HIIT (Round 2): Battle Ropes", duration: 45, rest: 15, description: "¡No pares! Mantén las olas vivas durante los 45 segundos." },
-                        { name: "HIIT (Round 2): Lanzamiento de Balón", duration: 45, rest: 60, description: "Usa todo tu cuerpo para lanzar el balón con la máxima potencia." },
-                        { name: "Core: Plancha", duration: 60, rest: 15, description: "Mantén el cuerpo recto como una tabla, apoyado en antebrazos y puntas de los pies." },
-                        { name: "Core: Elevación de Piernas", duration: 60, rest: 60, description: "Tumbado, levanta las piernas rectas hasta formar un ángulo de 90 grados y baja lentamente." },
-                        { name: "Enfriamiento: Caminata y Estiramiento Ligero", duration: 300, rest: 0, description: "Reduce el ritmo cardíaco y estira los músculos trabajados." }
+                        { name: "Calentamiento Dinámico", sets: 1, duration: 300, rest: 60, description: "Realiza zancadas, círculos de brazos, rotaciones de torso, patadas suaves." },
+                        { name: "HIIT Circuito: Round 1/5 (Burpees)", sets: 5, duration: 60, rest: 20, description: "Haz una flexión, salta agrupando las piernas y finaliza con un salto vertical." },
+                        { name: "HIIT Circuito: Round 1/5 (Swings)", sets: 5, duration: 60, rest: 20, description: "Con una pesa rusa, balancéala desde entre las piernas hasta la altura del pecho usando la cadera." },
+                        { name: "HIIT Circuito: Round 1/5 (Ropes)", sets: 5, duration: 60, rest: 20, description: "Sujeta las cuerdas y haz ondas alternas o simultáneas con máxima intensidad." },
+                        { name: "HIIT Circuito: Round 1/5 (Box Jumps)", sets: 5, duration: 60, rest: 120, description: "Salta sobre un cajón con ambos pies, aterriza suave. Baja, no saltes hacia atrás." },
+                        { name: "HIIT Circuito: Round 2/5 (Burpees)", sets: 5, duration: 60, rest: 20, description: "Segunda ronda. ¡Mantén la intensidad!" },
+                        { name: "HIIT Circuito: Round 2/5 (Swings)", sets: 5, duration: 60, rest: 20, description: "La potencia viene de la cadera, no de los brazos." },
+                        { name: "HIIT Circuito: Round 2/5 (Ropes)", sets: 5, duration: 60, rest: 20, description: "¡No pares! Mantén las olas vivas." },
+                        { name: "HIIT Circuito: Round 2/5 (Box Jumps)", sets: 5, duration: 60, rest: 120, description: "Concéntrate en una explosión controlada." },
+                        { name: "HIIT Circuito: Round 3, 4 y 5...", sets: 1, duration: 0, rest: 0, description: "Completa 3 rondas más del circuito HIIT. ¡Tú puedes!" },
+                        { name: "Core Finisher: Plancha", sets: 3, duration: 60, rest: 15, description: "Mantén el cuerpo recto como una tabla, apoyado en antebrazos y puntas de los pies." },
+                        { name: "Core Finisher: Elevación de Piernas", sets: 3, duration: 60, rest: 15, description: "Tumbado, levanta las piernas rectas hasta formar un ángulo de 90 grados y baja lentamente." },
+                        { name: "Enfriamiento: Caminata y Estiramiento Ligero", sets: 1, duration: 300, rest: 0, description: "Reduce el ritmo cardíaco y estira los músculos trabajados." }
                     ]
                 },
                 sabado: {
                     name: "Sparring / Open Mat",
                     exercises: [
-                        { name: "Sparring Ligero (Boxeo): Round 1", duration: 180, rest: 60, description: "Enfócate en la técnica, no en la fuerza. Fluye con tu compañero, busca combinaciones y defensa." },
-                        { name: "Sparring Ligero (Boxeo): Round 2", duration: 180, rest: 60, description: "Intenta aplicar las técnicas de distancia y ángulos del miércoles." },
-                        { name: "Sparring Ligero (Grappling): Round 1", duration: 240, rest: 60, description: "Practica posiciones y sumisiones de forma controlada y sin fuerza excesiva. Comunícate." },
-                        { name: "Sparring Ligero (Grappling): Round 2", duration: 240, rest: 60, description: "Enfócate en las transiciones y en mantener la presión como el lunes." },
-                        { name: "Sparring Situacional (MMA): Defensa de derribo", duration: 180, rest: 60, description: "Un compañero intenta derribarte, tú te enfocas solo en defender (sprawl, etc.)." },
-                        { name: "Sparring Situacional (MMA): Salir de la reja", duration: 180, rest: 60, description: "Un compañero te presiona contra la reja (o pared), tú practicas cómo escapar." },
-                        { name: "Enfriamiento y Análisis", duration: 300, rest: 0, description: "Estira y comenta con tu compañero qué funcionó, qué no y en qué mejorar." }
+                        { name: "Calentamiento Ligero", sets: 1, duration: 300, rest: 60, description: "Movilidad articular y sombra suave para preparar el cuerpo." },
+                        { name: "Sparring Boxeo: Round 1", sets: 3, duration: 240, rest: 60, description: "Enfócate en la técnica, no en la fuerza. Fluye con tu compañero." },
+                        { name: "Sparring Boxeo: Round 2", sets: 3, duration: 240, rest: 60, description: "Intenta aplicar las técnicas de distancia y ángulos del miércoles." },
+                        { name: "Sparring Boxeo: Round 3", sets: 3, duration: 240, rest: 60, description: "Aumenta ligeramente la intensidad, siempre controlado." },
+                        { name: "Sparring Grappling: Round 1", sets: 3, duration: 300, rest: 60, description: "Practica posiciones y sumisiones de forma controlada y sin fuerza excesiva." },
+                        { name: "Sparring Grappling: Round 2", sets: 3, duration: 300, rest: 60, description: "Enfócate en las transiciones y en mantener la presión como el lunes." },
+                        { name: "Sparring Grappling: Round 3", sets: 3, duration: 300, rest: 60, description: "Intenta combinar derribos con control en el suelo." },
+                        { name: "Sparring MMA: Round 1", sets: 2, duration: 300, rest: 60, description: "Integra todo: golpeo y grappling. Comunicación y control son la clave." },
+                        { name: "Sparring MMA: Round 2", sets: 2, duration: 300, rest: 60, description: "Practica situaciones específicas: contra la reja, defensa de derribo, etc." },
+                        { name: "Enfriamiento y Análisis", sets: 1, duration: 300, rest: 0, description: "Estira y comenta con tu compañero qué funcionó, qué no y en qué mejorar." }
                     ]
                 }
             };
@@ -281,7 +287,7 @@
                 const workout = workouts[selectedDay];
                 if (!workout) return;
 
-                const itemHeight = 85;
+                const itemHeight = 95; // Increased height for the new 'sets' line
                 ctx.save();
                 ctx.beginPath();
                 ctx.rect(x, y + 50, width, height - 60);
@@ -302,10 +308,11 @@
 
                     ctx.fillStyle = '#BDBDBD';
                     ctx.font = '12px Roboto';
-                    ctx.fillText(`${formatTime(ex.duration)} / ${formatTime(ex.rest)} descanso`, x + 25, itemY + 30);
+                    const setsText = ex.sets > 1 ? `${ex.sets} Series` : `1 Serie`;
+                    ctx.fillText(`${setsText} | ${formatTime(ex.duration)} / ${formatTime(ex.rest)} descanso`, x + 25, itemY + 30);
                     
                     ctx.fillStyle = '#A0A0A0';
-                    wrapText(ctx, ex.description || "", x + 25, itemY + 50, width - 60, 14);
+                    wrapText(ctx, ex.description || "", x + 25, itemY + 52, width - 60, 14);
                 });
                 ctx.restore();
             }
@@ -381,7 +388,7 @@
                 isWorking = true;
                 timeRemaining = exercise.duration;
                 
-                const itemHeight = 85;
+                const itemHeight = 95; // Use updated item height
                 const listArea = uiElements.workoutListArea;
                 const visibleHeight = listArea.height - 110;
                 const targetScroll = index * itemHeight - visibleHeight / 2 + itemHeight / 2;
@@ -492,7 +499,7 @@
                     listScrollY += event.deltaY * 0.5;
 
                     const workout = workouts[selectedDay];
-                    const itemHeight = 85;
+                    const itemHeight = 95; // Use updated item height
                     const totalListHeight = workout.exercises.length * itemHeight;
                     const maxScroll = Math.max(0, totalListHeight - (listArea.height - 60));
 
@@ -531,7 +538,7 @@
                 scrollMomentum = deltaY;
 
                 const workout = workouts[selectedDay];
-                const itemHeight = 85;
+                const itemHeight = 95; // Use updated item height
                 const totalListHeight = workout.exercises.length * itemHeight;
                 const listArea = uiElements.workoutListArea;
                 const maxScroll = Math.max(0, totalListHeight - (listArea.height - 60));
@@ -553,7 +560,7 @@
                     
                     // Clamp scroll position
                     const workout = workouts[selectedDay];
-                    const itemHeight = 85;
+                    const itemHeight = 95; // Use updated item height
                     const totalListHeight = workout.exercises.length * itemHeight;
                     const listArea = uiElements.workoutListArea;
                     const maxScroll = Math.max(0, totalListHeight - (listArea.height - 60));
